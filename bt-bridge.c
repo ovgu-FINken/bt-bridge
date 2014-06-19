@@ -202,35 +202,37 @@ void fatal(char *message)
 
 static void resp_begin(const char *rsptype)
 {
-  printf("%s=$%s", tag_RESPONSE, rsptype);
+  //printf("%s=$%s", tag_RESPONSE, rsptype);
+	void;
 }
 
 static void send_sym(const char *tag, const char *val)
 {
-  printf(" %s=$%s", tag, val);
+  //printf(" %s=$%s", tag, val);
+	void;
 }
 
 static void send_uint(const char *tag, unsigned int val)
 {
-  printf(" %s=h%X", tag, val);
+  //printf(" %s=h%X", tag, val);
+	void;
 }
 
 static void send_str(const char *tag, const char *val)
 {
   //!!FIXME
-  printf(" %s='%s", tag, val);
+  //printf(" %s='%s", tag, val);
+	void;
 }
 
 static void send_data(const unsigned char *val, size_t len)
 {
-  printf(" %s=b", tag_DATA);
   while ( len-- > 0 )
-    printf("%02X", *val++);
+    printf("%c", (char)*val++);
 }
 
 static void resp_end()
 {
-  printf("\n");
   fflush(stdout);
 }
 
@@ -275,25 +277,25 @@ static void set_state(enum state st)
 static void events_handler(const uint8_t *pdu, uint16_t len, gpointer user_data)
 {
 	uint8_t *opdu;
-        uint8_t evt;
+	uint8_t evt;
 	uint16_t handle, i, olen;
 	size_t plen;
 
-        evt = pdu[0];
+	evt = pdu[0];
 
-        if ( evt != ATT_OP_HANDLE_NOTIFY && evt != ATT_OP_HANDLE_IND )
-        {
-          printf("#Invalid opcode %02X in event handler??\n", evt);
-          return;
-        }
+	if ( evt != ATT_OP_HANDLE_NOTIFY && evt != ATT_OP_HANDLE_IND )
+	{
+		printf("#Invalid opcode %02X in event handler??\n", evt);
+		return;
+	}
 
-        assert( len >= 3 );
+	assert( len >= 3 );
 	handle = att_get_u16(&pdu[1]);
 
-        resp_begin( evt==ATT_OP_HANDLE_NOTIFY ? rsp_NOTIFY : rsp_IND );
-        send_uint( tag_HANDLE, handle );
-        send_data( pdu+3, len-3 );
-        resp_end();
+	//        resp_begin( evt==ATT_OP_HANDLE_NOTIFY ? rsp_NOTIFY : rsp_IND );
+	//        send_uint( tag_HANDLE, handle );
+	send_data( pdu+3, len-3 );
+	resp_end();
 
 	if (evt == ATT_OP_HANDLE_NOTIFY) 
 	{
@@ -1034,15 +1036,13 @@ static gboolean prompt_read(GIOChannel *chan, GIOCondition cond,
 		g_io_channel_unref(chan);
 		return FALSE;
 	}
-
-	if ( G_IO_STATUS_NORMAL != g_io_channel_read_chars(chan, &mychar, 1, &read_size, &err)) {
-		// do stuff with mychar
-		printf("[%c]", mychar);
-	}
-	else {
-		printf("# Quitting on input read fail\n");
-		g_main_loop_quit(event_loop);
-		return FALSE;
+	int bytesread = 0;
+	char c_in;
+	bytesread = read(ttyfd, &c_in, 1 /* read up to 1 byte */);
+	if(bytesread) {
+		gatt_write_char(attrib, handle, &c_in, 1, NULL, NULL);
+                resp_begin(rsp_WRITE);
+                resp_end();
 	}
 
 	return TRUE;
@@ -1060,6 +1060,7 @@ int main(int argc, char *argv[])
 	interface = argv[1];
 	handle = strtohandle(argv[2]);
 
+
 	GIOChannel *pchan;
 	gint events;
 
@@ -1075,8 +1076,10 @@ int main(int argc, char *argv[])
 
 	pchan = g_io_channel_unix_new(fileno(stdin));
 	g_io_channel_set_close_on_unref(pchan, TRUE);
+	tty_raw();
 	events = G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
 	g_io_add_watch(pchan, events, prompt_read, NULL);
+	cmd_connect(2, argv);
 	g_main_loop_run(event_loop);
 
 	cmd_disconnect(0, NULL);
