@@ -1076,7 +1076,7 @@ int main(int argc, char *argv[])
 
 	pchan = g_io_channel_unix_new(fileno(stdin));
 	g_io_channel_set_close_on_unref(pchan, TRUE);
-	//tty_raw();
+	tty_raw();
 	events = G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
 	g_io_add_watch(pchan, events, prompt_read, NULL);
 	cmd_connect(2, argv);
