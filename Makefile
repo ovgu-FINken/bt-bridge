@@ -8,7 +8,7 @@ IMPORT_SRCS = $(addprefix $(BLUEZ_PATH)/, $(BLUEZ_SRCS))
 LOCAL_SRCS  = bt-bridge.c
 
 CC = gcc
-CFLAGS = -O0 -g
+CFLAGS = -O2 -g
 
 CPPFLAGS = -DHAVE_CONFIG_H
 
